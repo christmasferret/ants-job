@@ -1,0 +1,2 @@
+java -jar -Dspring.profiles.active=master -Dserver.port=8080 /home/yu/IdeaProjects/ants-job/target/ants-job-0.0.1-SNAPSHOT.jar
+java -jar -Dspring.profiles.active=worker -Dserver.port=8081 /home/yu/IdeaProjects/ants-job/target/ants-job-0.0.1-SNAPSHOT.jar
