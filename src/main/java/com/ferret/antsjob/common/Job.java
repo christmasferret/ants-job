@@ -14,6 +14,6 @@ import java.io.Serializable;
 public class Job {
 
     private String name;
-    private String command;
+    private String parameter;
     private String cronExpr;
 }

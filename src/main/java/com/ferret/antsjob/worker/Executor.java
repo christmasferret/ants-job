@@ -51,24 +51,27 @@ public class Executor {
                         .readTimeout(30, TimeUnit.SECONDS)
                         .build();
 
-                HttpUrl.Builder httpBuilder = HttpUrl.parse("https://api.openweathermap.org/data/2.5/weather").newBuilder();
-                httpBuilder.addQueryParameter("q",jobExecuteInfo.getJob().getCommand());
+                //  http://api.openweathermap.org/data/2.5/group
+                //  https://api.openweathermap.org/data/2.5/weather
+                HttpUrl.Builder httpBuilder = HttpUrl.parse("http://api.openweathermap.org/data/2.5/group").newBuilder();
+                httpBuilder.addQueryParameter("id",jobExecuteInfo.getJob().getParameter());
                 httpBuilder.addQueryParameter("appid","c84c5f67c239af45375bb4a83d2a044a");
-
-                Request request = new Request.Builder().url(httpBuilder.build()).build();
-                Response response = client.newCall(request).execute();
-                JsonNode productNode = new ObjectMapper().readTree(response.body().string());
-                JsonNode t = productNode.get("weather");
-
-                CityWeather cityWeather = new CityWeather();
-                cityWeather.setCity(productNode.get("name").textValue());
-                cityWeather.setTemperature(productNode.get("main").get("temp").asDouble());
-                cityWeather.setUnixEpochTime(productNode.get("dt").asLong());
-                cityWeather.setWeatherDescription(productNode.get("weather").get(0).get("description").textValue());
-
                 System.out.println("execute job: " + jobExecuteInfo.getJob().getName() + " / planned execution time: "
                         + jobExecuteInfo.getPlanExecution() + " / real time: " + jobExecuteInfo.getRealExecution());
-                System.out.println(cityWeather);
+                Thread.sleep(3000);
+                Request request = new Request.Builder().url(httpBuilder.build()).build();
+                Response response = client.newCall(request).execute();
+                JsonNode cityWeatherList = new ObjectMapper().readTree(response.body().string());
+                for (JsonNode cityWeatheNode : cityWeatherList.get("list")) {
+                    JsonNode t = cityWeatheNode.get("weather");
+                    CityWeather cityWeather = new CityWeather();
+                    cityWeather.setCity(cityWeatheNode.get("name").textValue());
+                    cityWeather.setTemperature(cityWeatheNode.get("main").get("temp").asDouble());
+                    cityWeather.setUnixEpochTime(cityWeatheNode.get("dt").asLong());
+                    cityWeather.setWeatherDescription(cityWeatheNode.get("weather").get(0).get("description").textValue());
+                    System.out.println(cityWeather.getCity());
+                    RedisClusterUtil.setEx(cityWeather.getCity(), JsonUtil.obj2String(cityWeather), 1000);
+                }
                 jobExecuteResult.setEndTime(ZonedDateTime.now());
                 jobExecuteResult.setOutput("done");
                 jobExecuteResult.setError("None");
